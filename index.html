@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absensi Digital - SMP Islam YTM 1 Bogor</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- React & ReactDOM (UMD) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel Standalone for JSX parsing in browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Recharts & Dependencies -->
+  <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.0/umd/Recharts.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+    
+    @keyframes pulseShort { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+    .animate-pulse-short { animation: pulseShort 0.3s ease-in-out; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, Component } = React;
+    const { 
+      BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+      Tooltip: RechartsTooltip, Legend, ResponsiveContainer, 
+      PieChart, Pie, Cell 
+    } = window.Recharts || {};
+
+    const COLORS = {
+      primary: '#1e3a8a',  // Deep Navy Blue
+      secondary: '#d97706',// Amber/Gold
+      hadir: '#10b981',    // Emerald Green
+      sakit: '#f59e0b',    // Amber Yellow
+      izin: '#3b82f6',     // Royal Blue
+      alpa: '#ef4444'      // Rose Red
+    };
+
+    const PIE_COLORS = [COLORS.hadir, COLORS.sakit, COLORS.izin, COLORS.alpa];
+
+    const genId = () => Math.random().toString(36).substring(2, 9);
+
+    const DEFAULT_USERS = [
+      {
+        id: 'usr_admin',
+        username: 'adelitbang',
+        password: 'adeadmin125',
+        name: 'Adelitbang (Admin IT)',
+        role: 'ADMIN',
+        status: 'Aktif',
+        info: 'Administrator Utama System'
+      },
+      {
+        id: 'usr_wali1',
+        username: 'syifa7a',
+        password: 'syifa7a',
+        name: 'Siti Syifa Aisyah, S.Pd',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c1',
+        info: 'Wali Kelas VII A'
+      },
+      {
+        id: 'usr_wali2',
+        username: 'ika7b',
+        password: 'ika7b',
+        name: 'Ika Nurmarita Ayu, S.Pd',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c2',
+        info: 'Wali Kelas VII B'
+      },
+      {
+        id: 'usr_wali3',
+        username: 'dwi7c',
+        password: 'dwi7c',
+        name: 'Dwilarti, SE',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c3',
+        info: 'Wali Kelas VII C'
+      },
+      {
+        id: 'usr_wali4',
+        username: 'mul8a',
+        password: 'mul8a',
+        name: 'Mulyadi, S.Pd.I',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c4',
+        info: 'Wali Kelas VIII A'
+      },
+      {
+        id: 'usr_wali5',
+        username: 'hendra8b',
+        password: 'hendra8b',
+        name: 'R. Hendra Yan, SP',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c5',
+        info: 'Wali Kelas VIII B'
+      },
+      {
+        id: 'usr_wali6',
+        username: 'andri9a',
+        password: 'andri9a',
+        name: 'Andri Purnawan, S.Pd',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c6',
+        info: 'Wali Kelas IX A'
+      },
+      {
+        id: 'usr_wali7',
+        username: 'henni9b',
+        password: 'henni9b',
+        name: 'Henni Nurul Aeni, S.Pd',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c7',
+        info: 'Wali Kelas IX B'
+      },
+      {
+        id: 'usr_wali8',
+        username: 'lena9c',
+        password: 'lena9c',
+        name: 'Siti Nurlena, S.Pd',
+        role: 'WALI',
+        status: 'Aktif',
+        classId: 'c8',
+        info: 'Wali Kelas IX C'
+      },
+      {
+        id: 'usr_guru1',
+        username: 'informatika1',
+        password: 'juaeni1',
+        name: 'Akhmad Juaeni, SE',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Informatika',
+        info: 'Guru Mata Pelajaran Informatika 1'
+      },
+      {
+        id: 'usr_guru2',
+        username: 'informatika2',
+        password: 'yudi2',
+        name: 'Yudi Guntara, S.Kom.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Informatika',
+        info: 'Guru Mata Pelajaran Informatika 2'
+      },
+      {
+        id: 'usr_guru3',
+        username: 'IPS1',
+        password: 'teti1',
+        name: 'Teti Subekti, S.Pd',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'IPS',
+        info: 'Guru Mata Pelajaran IPS 1'
+      },
+      {
+        id: 'usr_guru4',
+        username: 'ips2',
+        password: 'mariam2',
+        name: 'Siti Mariam, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'IPS',
+        info: 'Guru Mata Pelajaran IPS 2'
+      },
+      {
+        id: 'usr_guru5',
+        username: 'IPA1',
+        password: 'henni1',
+        name: 'Henni Nurul Aeni, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'IPA',
+        info: 'Guru Mata Pelajaran IPA 1'
+      },
+      {
+        id: 'usr_guru6',
+        username: 'ipa2',
+        password: 'ade2',
+        name: 'R. Ade Hermadi, S.Hut.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'IPA',
+        info: 'Guru Mata Pelajaran IPA 2'
+      },
+      {
+        id: 'usr_guru7',
+        username: 'B.Indonesia1',
+        password: 'lena1',
+        name: 'Siti Nurlena, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Bahasa Indonesia',
+        info: 'Guru Mata Pelajaran Bahasa Indonesia 1'
+      },
+      {
+        id: 'usr_guru8',
+        username: 'B.Indonesia2',
+        password: 'hendra2',
+        name: 'R. Hendra Yan, SP.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Bahasa Indonesia',
+        info: 'Guru Mata Pelajaran Bahasa Indonesia 2'
+      },
+      {
+        id: 'usr_guru9',
+        username: 'inggris1',
+        password: 'mursid1',
+        name: 'Mursid, BBA',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Bahasa Inggris',
+        info: 'Guru Mata Pelajaran Bahasa Inggris 1'
+      },
+      {
+        id: 'usr_guru10',
+        username: 'B.Inggris2',
+        password: 'eva2',
+        name: 'Eva Ariantika H, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Bahasa Inggris',
+        info: 'Guru Mata Pelajaran Bahasa Inggris 2'
+      },
+      {
+        id: 'usr_guru11',
+        username: 'pancasila1',
+        password: 'mulyadi1',
+        name: 'Mulyadi, S.Pd.I',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Pendidikan Pancasila',
+        info: 'Guru Mata Pelajaran Pendidikan Pancasila 1'
+      },
+      {
+        id: 'usr_guru12',
+        username: 'pancasila2',
+        password: 'bandi2',
+        name: 'Bandi Mulyadi, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Pendidikan Pancasila',
+        info: 'Guru Mata Pelajaran Pendidikan Pancasila 2'
+      },
+      {
+        id: 'usr_guru13',
+        username: 'sbk1',
+        password: 'hendra1',
+        name: 'R. Hendra Yan, SP.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Seni Budaya',
+        info: 'Guru Mata Pelajaran Seni Budaya 1'
+      },
+      {
+        id: 'usr_guru14',
+        username: 'senibudaya2',
+        password: 'akbar2',
+        name: 'Akbar Fadil, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Seni Budaya',
+        info: 'Guru Mata Pelajaran Seni Budaya 2'
+      },
+      {
+        id: 'usr_guru15',
+        username: 'mtk1',
+        password: 'ika1',
+        name: 'Ika Nurmarita Ayu, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Matematika',
+        info: 'Guru Mata Pelajaran Matematika 1'
+      },
+      {
+        id: 'usr_guru16',
+        username: 'mtk2',
+        password: 'ade2',
+        name: 'R. Ade Hermadi, S.Hut.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Matematika',
+        info: 'Guru Mata Pelajaran Matematika 2'
+      },
+      {
+        id: 'usr_guru17',
+        username: 'pjok1',
+        password: 'bandi1',
+        name: 'Bandi Mulyadi, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'PJOK',
+        info: 'Guru Mata Pelajaran PJOK 1'
+      },
+      {
+        id: 'usr_guru18',
+        username: 'PJOK2',
+        password: 'andri2',
+        name: 'Andri Purnawan, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'PJOK',
+        info: 'Guru Mata Pelajaran PJOK 2'
+      },
+      {
+        id: 'usr_guru19',
+        username: 'sunda',
+        password: 'sukanta1',
+        name: 'Sukanta, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Bahasa Sunda',
+        info: 'Guru Mata Pelajaran Bahasa Sunda'
+      },
+      {
+        id: 'usr_guru20',
+        username: 'PAI1',
+        password: 'yunus1',
+        name: 'Ahmad Yunus, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'PAI',
+        info: 'Guru Mata Pelajaran PAI 1'
+      },
+      {
+        id: 'usr_guru21',
+        username: 'pai2',
+        password: 'syifa2',
+        name: 'Siti Syifa Aisyah, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'PAI',
+        info: 'Guru Mata Pelajaran PAI 2'
+      },
+      {
+        id: 'usr_guru22',
+        username: 'BTQ1',
+        password: 'yunus1',
+        name: 'Ahmad Yunus, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'BTQ',
+        info: 'Guru Mata Pelajaran BTQ 1'
+      },
+      {
+        id: 'usr_guru23',
+        username: 'BTQ2',
+        password: 'syifa2',
+        name: 'Siti Syifa Aisyah, S.Pd.',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'BTQ',
+        info: 'Guru Mata Pelajaran BTQ 2'
+      },
+      {
+        id: 'usr_guru24',
+        username: 'bk1',
+        password: 'bk1',
+        name: 'Dwilarti, SE',
+        role: 'GURU',
+        status: 'Aktif',
+        subject: 'Bimbingan Konseling',
+        info: 'Guru Bimbingan dan Konseling'
+      }
+    ];
+
+    const DEFAULT_CLASSES = [
+      { id: 'c1', name: 'VII A', level: 'VII', wali: 'Siti Syifa Aisyah, S.Pd', room: 'Ruang 101' },
+      { id: 'c2', name: 'VII B', level: 'VII', wali: 'Ika Nurmarita Ayu, S.Pd', room: 'Ruang 102' },
+      { id: 'c3', name: 'VII C', level: 'VII', wali: 'Dwilarti, SE', room: 'Ruang 103' },
+      { id: 'c4', name: 'VIII A', level: 'VIII', wali: 'Mulyadi, S.Pd.I', room: 'Ruang 201' },
+      { id: 'c5', name: 'VIII B', level: 'VIII', wali: 'R. Hendra Yan, SP', room: 'Ruang 202' },
+      { id: 'c6', name: 'IX A', level: 'IX', wali: 'Andri Purnawan, S.Pd', room: 'Ruang 301' },
+      { id: 'c7', name: 'IX B', level: 'IX', wali: 'Henni Nurul Aeni, S.Pd', room: 'Ruang 302' },
+      { id: 'c8', name: 'IX C', level: 'IX', wali: 'Siti Nurlena, S.Pd', room: 'Ruang 303' }
+    ];
+
+    const generateDefaultStudents = () => {
+      const firstNamesL = ["Muhammad", "Ahmad", "Rizky", "Dimas", "Fajar", "Reza", "Bayu", "Doni", "Gilang", "Iqbal", "Farhan", "Zaky"];
+      const firstNamesP = ["Siti", "Nur", "Dewi", "Putri", "Lestari", "Anisa", "Citra", "Fitri", "Hana", "Indah", "Nabila", "Aisyah"];
+      const lastNames = ["Pratama", "Saputra", "Wijaya", "Lestari", "Kusuma", "Ramadhan", "Santoso", "Hidayat", "Nugroho", "Firmansyah"];
+
+      const students = [];
+      let counter = 1;
+
+      DEFAULT_CLASSES.forEach((cls) => {
+        for (let i = 1; i <= 6; i++) {
+          const isBoy = i % 2 !== 0;
+          const fn = isBoy ? firstNamesL[(counter * 3) % firstNamesL.length] : firstNamesP[(counter * 5) % firstNamesP.length];
+          const ln = lastNames[(counter * 7) % lastNames.length];
+          
+          students.push({
+            id: `std_${counter}`,
+            nis: `2425${1000 + counter}`,
+            nisn: `008${10000000 + counter * 1234}`,
+            name: `${fn} ${ln}`,
+            gender: isBoy ? 'L' : 'P',
+            classId: cls.id,
+            pob: 'Bogor',
+            dob: '2011-04-12',
+            parentPhone: `0812${Math.floor(10000000 + Math.random() * 90000000)}`,
+            address: `Jl. Raya Dramaga No. ${10 + counter}, Dramaga, Bogor`,
+            status: 'Aktif'
+          });
+          counter++;
+        }
+      });
+      return students;
+    };
+
+    class ErrorBoundary extends Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div className="min-h-screen bg-rose-50 flex items-center justify-center p-6 text-center">
+              <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-md border border-rose-200">
+                <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                  <i className="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Terjadi Kesalahan Sistem</h2>
+                <p className="text-xs text-slate-500 mb-6">{this.state.error?.toString()}</p>
+                <button 
+                  onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+                  className="px-6 py-3 bg-blue-900 text-white rounded-xl text-xs font-bold hover:bg-blue-800 transition"
+                >
+                  Muat Ulang Aplikasi
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
+    const Toast = ({ message, type = 'success', onClose }) => {
+      useEffect(() => {
+        const timer = setTimeout(onClose, 3500);
+        return () => clearTimeout(timer);
+      }, [onClose]);
+
+      const bg = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-rose-600 text-white' : 'bg-blue-800 text-white';
+      const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info';
+
+      return (
+        <div className={`fixed bottom-5 right-5 flex items-center px-4 py-3 rounded-2xl shadow-2xl z-50 transition-all transform animate-fade-in ${bg}`}>
+          <i className={`fa-solid ${icon} text-lg mr-3`}></i>
+          <p className="font-semibold text-xs tracking-wide mr-4">{message}</p>
+          <button onClick={onClose} className="opacity-75 hover:opacity-100 transition p-1">
+            <i className="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      );
+    };
+
+    const Modal = ({ isOpen, title, onClose, children }) => {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 bg-blue-950 text-white flex items-center justify-between">
+              <h3 className="font-bold text-sm tracking-wide">{title}</h3>
+              <button onClick={onClose} className="text-slate-300 hover:text-white transition">
+                <i className="fa-solid fa-xmark text-lg"></i>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4">
+              {children}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ConfirmModal = ({ isOpen, title, message, onConfirm, onClose }) => {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-6 text-center space-y-4">
+            <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl">
+              <i className="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 className="font-extrabold text-base text-slate-800">{title}</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">{message}</p>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button 
+                onClick={onClose} 
+                className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={onConfirm} 
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition shadow-md shadow-rose-600/30"
+              >
+                Hapus Data
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    function App() {
+      const [activeUser, setActiveUser] = useState(null);
+      const [users, setUsers] = useState([]);
+      const [toast, setToast] = useState(null);
+      const [sidebarOpen, setSidebarOpen] = useState(false);
+
+      const [classes, setClasses] = useState([]);
+      const [students, setStudents] = useState([]);
+      const [attendance, setAttendance] = useState([]);
+
+      // Login form states
+      const [loginUsername, setLoginUsername] = useState('');
+      const [loginPassword, setLoginPassword] = useState('');
+      const [showLoginPassword, setShowLoginPassword] = useState(false);
+      const [loginError, setLoginError] = useState('');
+
+      useEffect(() => {
+        try {
+          // Load Users
+          const savedUsers = localStorage.getItem('ytm_users');
+          const loadedUsers = savedUsers ? JSON.parse(savedUsers) : DEFAULT_USERS;
+          setUsers(loadedUsers);
+          if (!savedUsers) {
+            localStorage.setItem('ytm_users', JSON.stringify(DEFAULT_USERS));
+          }
+
+          // Load Active User session
+          const savedActiveUser = localStorage.getItem('ytm_active_user');
+          if (savedActiveUser) {
+            setActiveUser(JSON.parse(savedActiveUser));
+          }
+
+          // Load Classes
+          const savedClasses = localStorage.getItem('ytm_classes');
+          setClasses(savedClasses ? JSON.parse(savedClasses) : DEFAULT_CLASSES);
+
+          // Load Students
+          const savedStudents = localStorage.getItem('ytm_students');
+          const loadedStudents = savedStudents ? JSON.parse(savedStudents) : generateDefaultStudents();
+          setStudents(loadedStudents);
+          if (!savedStudents) {
+            localStorage.setItem('ytm_students', JSON.stringify(loadedStudents));
+          }
+
+          // Load Attendance Records
+          const savedAttendance = localStorage.getItem('ytm_attendance');
+          if (savedAttendance) {
+            setAttendance(JSON.parse(savedAttendance));
+          } else {
+            const today = new Date().toISOString().split('T')[0];
+            const sampleAtt = [];
+            loadedStudents.forEach((s, idx) => {
+              let status = 'hadir';
+              if (idx % 9 === 0) status = 'sakit';
+              else if (idx % 14 === 0) status = 'izin';
+              else if (idx % 19 === 0) status = 'alpa';
+              sampleAtt.push({ 
+                id: genId(), 
+                date: today, 
+                classId: s.classId, 
+                studentId: s.id, 
+                status: status,
+                note: status !== 'hadir' ? 'Keterangan terpantau' : ''
+              });
+            });
+            setAttendance(sampleAtt);
+            localStorage.setItem('ytm_attendance', JSON.stringify(sampleAtt));
+          }
+        } catch (e) {
+          console.error("Error loading application state", e);
+        }
+      }, []);
+
+      const showToast = (message, type = 'success') => setToast({ message, type });
+
+      const handleAuthLogin = (e) => {
+        e.preventDefault();
+        setLoginError('');
+
+        const userFound = users.find(
+          u => u.username.trim().toLowerCase() === loginUsername.trim().toLowerCase() && u.password === loginPassword
+        );
+
+        if (userFound) {
+          if (userFound.status === 'Nonaktif') {
+            setLoginError('Akun Anda telah dinonaktifkan. Silakan hubungi Admin IT.');
+            showToast('Akses ditolak: Akun Nonaktif!', 'error');
+            return;
+          }
+          setActiveUser(userFound);
+          localStorage.setItem('ytm_active_user', JSON.stringify(userFound));
+          showToast(`Selamat datang kembali, ${userFound.name}!`);
+          setLoginUsername('');
+          setLoginPassword('');
+        } else {
+          setLoginError('Username atau Kata Sandi salah! Hubungi Admin IT jika Anda belum memiliki akun.');
+          showToast('Gagal Masuk! Otentikasi ditolak.', 'error');
+        }
+      };
+
+      const handleLogout = () => {
+        setActiveUser(null);
+        localStorage.removeItem('ytm_active_user');
+        showToast('Anda telah keluar dari sistem.', 'info');
+      };
+
+      // Helper state synchronizers
+      const updateUsers = (newUsers) => {
+        setUsers(newUsers);
+        localStorage.setItem('ytm_users', JSON.stringify(newUsers));
+      };
+
+      const updateStudents = (newStudents) => {
+        setStudents(newStudents);
+        localStorage.setItem('ytm_students', JSON.stringify(newStudents));
+      };
+
+      const updateClasses = (newClasses) => {
+        setClasses(newClasses);
+        localStorage.setItem('ytm_classes', JSON.stringify(newClasses));
+      };
+
+      const updateAttendance = (newAttendance) => {
+        setAttendance(newAttendance);
+        localStorage.setItem('ytm_attendance', JSON.stringify(newAttendance));
+      };
+
+      if (!activeUser) {
+        return (
+          <ErrorBoundary>
+            <div className="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-blue-900 flex items-center justify-center p-4">
+              <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 animate-fade-in border border-blue-900/20 my-8">
+                
+                {/* Header Banner */}
+                <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-slate-900 p-8 text-center text-white relative">
+                  <div className="w-20 h-20 mx-auto bg-amber-400 rounded-2xl flex items-center justify-center text-blue-950 text-3xl font-black shadow-lg mb-4 border-2 border-white/20">
+                    <i className="fa-solid fa-graduation-cap"></i>
+                  </div>
+                  <h1 className="text-2xl font-black tracking-wide">ABSENSI DIGITAL</h1>
+                  <p className="text-amber-400 text-xs font-bold tracking-wider mt-1 uppercase">SMP Islam YTM 1 Bogor</p>
+                </div>
+                
+                {/* Form Container */}
+                <div className="p-8 space-y-6">
+                  {loginError && (
+                    <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-xs flex items-center gap-2 font-semibold animate-pulse-short">
+                      <i className="fa-solid fa-triangle-exclamation text-base shrink-0"></i>
+                      <span>{loginError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleAuthLogin} className="space-y-5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Username Akses</label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                          <i className="fa-solid fa-user text-sm"></i>
+                        </span>
+                        <input 
+                          type="text" 
+                          required
+                          placeholder="Masukkan username anda..."
+                          value={loginUsername}
+                          onChange={(e) => setLoginUsername(e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 bg-slate-50 transition"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Kata Sandi</label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                          <i className="fa-solid fa-lock text-sm"></i>
+                        </span>
+                        <input 
+                          type={showLoginPassword ? "text" : "password"} 
+                          required
+                          placeholder="Masukkan kata sandi..."
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          className="w-full pl-10 pr-10 py-3 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700 bg-slate-50 transition"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setShowLoginPassword(!showLoginPassword)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600"
+                        >
+                          <i className={`fa-solid ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="w-full bg-blue-950 hover:bg-blue-900 text-white font-extrabold py-3.5 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-blue-950/30 flex items-center justify-center gap-2"
+                    >
+                      <span>Masuk Ke Sistem</span>
+                      <i className="fa-solid fa-arrow-right"></i>
+                    </button>
+                  </form>
+
+                  {/* Security Notice Footer */}
+                  <div className="pt-4 border-t border-slate-100 text-center">
+                    <div className="inline-flex items-center justify-center space-x-1.5 text-[11px] text-slate-500 bg-slate-100 px-3 py-2 rounded-xl font-medium">
+                      <i className="fa-solid fa-shield-halved text-blue-700"></i>
+                      <span>Akses terbatas. Hubungi Admin IT untuk pembuatan akun resmi.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+          </ErrorBoundary>
+        );
+      }
+
+      return (
+        <ErrorBoundary>
+          <div className="flex h-screen overflow-hidden font-sans text-slate-800">
+            <AppContent 
+              user={activeUser}
+              setUser={setActiveUser}
+              users={users}
+              setUsers={updateUsers}
+              onLogout={handleLogout}
+              classes={classes}
+              setClasses={updateClasses}
+              students={students}
+              setStudents={updateStudents}
+              attendance={attendance}
+              setAttendance={updateAttendance}
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+              showToast={showToast}
+            />
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+          </div>
+        </ErrorBoundary>
+      );
+    }
+
+    const AppContent = ({ user, setUser, users, setUsers, onLogout, classes, setClasses, students, setStudents, attendance, setAttendance, sidebarOpen, setSidebarOpen, showToast }) => {
+      const [activeTab, setActiveTab] = useState('dashboard');
+
+      const menuItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: 'fa-solid fa-chart-pie', roles: ['ADMIN', 'WALI', 'GURU'] },
+        { id: 'classes', label: 'Data Kelas', icon: 'fa-solid fa-school', roles: ['ADMIN'] },
+        { id: 'students', label: 'Data Siswa', icon: 'fa-solid fa-users', roles: ['ADMIN', 'WALI'] },
+        { id: 'attendance', label: 'Absensi Siswa', icon: 'fa-solid fa-clipboard-user', roles: ['ADMIN', 'WALI', 'GURU'] },
+        { id: 'history', label: 'Riwayat & Laporan', icon: 'fa-solid fa-file-lines', roles: ['ADMIN', 'WALI', 'GURU'] },
+        { id: 'qrcode', label: 'Kartu QR & Scan', icon: 'fa-solid fa-qrcode', roles: ['ADMIN', 'GURU'] },
+        { id: 'settings', label: 'Pengaturan User', icon: 'fa-solid fa-user-gear', roles: ['ADMIN'] }
+      ];
+
+      const allowedMenus = menuItems.filter(m => m.roles.includes(user.role));
+
+      const renderView = () => {
+        switch (activeTab) {
+          case 'dashboard': 
+            return <DashboardView attendance={attendance} classes={classes} students={students} setActiveTab={setActiveTab} user={user} />;
+          case 'classes':
+            return <ClassesView classes={classes} setClasses={setClasses} students={students} showToast={showToast} />;
+          case 'students':
+            return <StudentsView students={students} setStudents={setStudents} classes={classes} showToast={showToast} user={user} />;
+          case 'attendance':
+            return <AttendanceInputView classes={classes} students={students} attendance={attendance} setAttendance={setAttendance} showToast={showToast} user={user} />;
+          case 'history':
+            return <HistoryView classes={classes} students={students} attendance={attendance} />;
+          case 'qrcode':
+            return <QrView students={students} classes={classes} attendance={attendance} setAttendance={setAttendance} showToast={showToast} />;
+          case 'settings':
+            return <UserSettingsView users={users} setUsers={setUsers} classes={classes} showToast={showToast} currentUser={user} setCurrentUser={setUser} />;
+          default:
+            return <DashboardView attendance={attendance} classes={classes} students={students} setActiveTab={setActiveTab} user={user} />;
+        }
+      };
+
+      return (
+        <div className="flex h-screen bg-slate-100 overflow-hidden w-full">
+          {/* Mobile Overlay */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            ></div>
+          )}
+
+          {/* Sidebar */}
+          <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-blue-950 text-white flex flex-col justify-between transition-transform duration-300 ease-in-out ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}>
+            <div>
+              {/* Sidebar Header */}
+              <div className="p-6 border-b border-blue-900/50 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center text-blue-950 text-xl font-black shadow-md">
+                    <i className="fa-solid fa-graduation-cap"></i>
+                  </div>
+                  <div>
+                    <h1 className="font-extrabold text-sm tracking-wide text-white">YTM 1 BOGOR</h1>
+                    <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Absensi Digital</p>
+                  </div>
+                </div>
+                <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="p-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)]">
+                {allowedMenus.map(menu => {
+                  const isActive = activeTab === menu.id;
+                  return (
+                    <button
+                      key={menu.id}
+                      onClick={() => {
+                        setActiveTab(menu.id);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all ${
+                        isActive 
+                          ? 'bg-amber-400 text-blue-950 shadow-lg shadow-amber-400/20' 
+                          : 'text-slate-300 hover:bg-blue-900/60 hover:text-white'
+                      }`}
+                    >
+                      <i className={`${menu.icon} text-base w-5 text-center`}></i>
+                      <span>{menu.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Sidebar User Profile Info */}
+            <div className="p-4 border-t border-blue-900/50 bg-blue-900/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 overflow-hidden">
+                  <div className="w-9 h-9 rounded-full bg-amber-400 text-blue-950 font-black flex items-center justify-center text-xs shrink-0">
+                    {user.name.charAt(0)}
+                  </div>
+                  <div className="truncate">
+                    <p className="text-xs font-bold text-white truncate">{user.name}</p>
+                    <p className="text-[10px] text-amber-400 font-bold uppercase">{user.role}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={onLogout} 
+                  className="p-2 text-slate-400 hover:text-rose-400 transition"
+                  title="Keluar / Logout"
+                >
+                  <i className="fa-solid fa-right-from-bracket"></i>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Area */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            {/* Top Navbar */}
+            <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between no-print shadow-sm">
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                >
+                  <i className="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-800">
+                    {menuItems.find(m => m.id === activeTab)?.label || 'Dashboard'}
+                  </h2>
+                  <p className="text-[11px] text-slate-400">SMP Islam YTM 1 Bogor - Sistem Presensi Digital</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <span className="hidden sm:inline-block px-3.5 py-1.5 bg-blue-50 text-blue-950 border border-blue-200 rounded-full text-[11px] font-bold">
+                  <i className="fa-solid fa-calendar-day mr-1.5 text-blue-700"></i>
+                  {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
+                <button 
+                  onClick={onLogout}
+                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs transition border border-rose-200 flex items-center gap-1.5"
+                >
+                  <i className="fa-solid fa-power-off text-xs"></i>
+                  <span className="hidden sm:inline">Keluar</span>
+                </button>
+              </div>
+            </header>
+
+            {/* Content View */}
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
+              {renderView()}
+            </main>
+          </div>
+        </div>
+      );
+    };
+
+    const DashboardView = ({ attendance, classes, students, setActiveTab, user }) => {
+      const today = new Date().toISOString().split('T')[0];
+
+      const todayAttendance = useMemo(() => {
+        return attendance.filter(a => a.date === today);
+      }, [attendance, today]);
+
+      const counts = useMemo(() => {
+        let hadir = 0, sakit = 0, izin = 0, alpa = 0;
+        todayAttendance.forEach(a => {
+          if (a.status === 'hadir') hadir++;
+          else if (a.status === 'sakit') sakit++;
+          else if (a.status === 'izin') izin++;
+          else if (a.status === 'alpa') alpa++;
+        });
+        const recorded = todayAttendance.length;
+        const total = students.length;
+        const belumAbsen = Math.max(0, total - recorded);
+
+        return { hadir, sakit, izin, alpa, recorded, total, belumAbsen };
+      }, [todayAttendance, students]);
+
+      const pieData = [
+        { name: 'Hadir', value: counts.hadir },
+        { name: 'Sakit', value: counts.sakit },
+        { name: 'Izin', value: counts.izin },
+        { name: 'Alpa', value: counts.alpa }
+      ];
+
+      const barData = useMemo(() => {
+        return classes.map(cls => {
+          const classStudents = students.filter(s => s.classId === cls.id);
+          const studentIds = new Set(classStudents.map(s => s.id));
+          const clsAtt = todayAttendance.filter(a => studentIds.has(a.studentId));
+
+          let h = 0, s = 0, i = 0, a = 0;
+          clsAtt.forEach(item => {
+            if (item.status === 'hadir') h++;
+            else if (item.status === 'sakit') s++;
+            else if (item.status === 'izin') i++;
+            else if (item.status === 'alpa') a++;
+          });
+
+          return {
+            name: cls.name,
+            Hadir: h,
+            Sakit: s,
+            Izin: i,
+            Alpa: a
+          };
+        });
+      }, [classes, students, todayAttendance]);
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          {/* Welcome Banner */}
+          <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="space-y-1 relative z-10">
+              <span className="px-3 py-1 bg-amber-400 text-blue-950 text-[10px] font-black rounded-full uppercase tracking-wider">
+                Sistem Presensi Aktif
+              </span>
+              <h2 className="text-xl font-extrabold">Selamat Datang, {user.name}!</h2>
+              <p className="text-xs text-blue-200">
+                Akses terotorisasi sebagai <strong className="text-amber-400 uppercase">{user.role}</strong>. Rekap data kehadiran siswa SMP Islam YTM 1 Bogor.
+              </p>
+            </div>
+            <div className="flex gap-2 relative z-10 shrink-0">
+              <button 
+                onClick={() => setActiveTab('attendance')} 
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-blue-950 rounded-xl font-extrabold text-xs transition shadow-md flex items-center gap-2"
+              >
+                <i className="fa-solid fa-clipboard-check"></i>
+                <span>Input Presensi</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Total Murid</span>
+              <div className="flex items-end justify-between mt-2">
+                <span className="text-2xl font-black text-slate-800">{counts.total}</span>
+                <i className="fa-solid fa-users text-blue-600 text-xl"></i>
+              </div>
+            </div>
+
+            <div className="bg-emerald-50 p-4 rounded-2xl shadow-sm border border-emerald-200 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-emerald-700 uppercase">Hadir</span>
+              <div className="flex items-end justify-between mt-2">
+                <span className="text-2xl font-black text-emerald-800">{counts.hadir}</span>
+                <i className="fa-solid fa-user-check text-emerald-600 text-xl"></i>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 p-4 rounded-2xl shadow-sm border border-amber-200 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-amber-700 uppercase">Sakit</span>
+              <div className="flex items-end justify-between mt-2">
+                <span className="text-2xl font-black text-amber-800">{counts.sakit}</span>
+                <i className="fa-solid fa-notes-medical text-amber-600 text-xl"></i>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-2xl shadow-sm border border-blue-200 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-blue-700 uppercase">Izin</span>
+              <div className="flex items-end justify-between mt-2">
+                <span className="text-2xl font-black text-blue-800">{counts.izin}</span>
+                <i className="fa-solid fa-envelope-open-text text-blue-600 text-xl"></i>
+              </div>
+            </div>
+
+            <div className="bg-rose-50 p-4 rounded-2xl shadow-sm border border-rose-200 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-rose-700 uppercase">Alpa</span>
+              <div className="flex items-end justify-between mt-2">
+                <span className="text-2xl font-black text-rose-800">{counts.alpa}</span>
+                <i className="fa-solid fa-user-xmark text-rose-600 text-xl"></i>
+              </div>
+            </div>
+
+            <div className="bg-slate-100 p-4 rounded-2xl shadow-sm border border-slate-300 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-slate-600 uppercase">Belum Absen</span>
+              <div className="flex items-end justify-between mt-2">
+                <span className="text-2xl font-black text-slate-700">{counts.belumAbsen}</span>
+                <i className="fa-solid fa-clock text-slate-500 text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          {/* Graphs Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Pie Chart */}
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+              <h3 className="font-extrabold text-sm text-slate-800 mb-4 flex items-center gap-2">
+                <i className="fa-solid fa-chart-pie text-blue-700"></i>
+                <span>Persentase Kehadiran Hari Ini</span>
+              </h3>
+              <div className="h-64 w-full flex items-center justify-center">
+                {ResponsiveContainer ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-xs text-slate-400">Loading Chart...</div>
+                )}
+              </div>
+            </div>
+
+            {/* Bar Chart */}
+            <div className="lg:col-span-2 bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+              <h3 className="font-extrabold text-sm text-slate-800 mb-4 flex items-center gap-2">
+                <i className="fa-solid fa-chart-column text-blue-700"></i>
+                <span>Rekap Kehadiran Per Kelas</span>
+              </h3>
+              <div className="h-64 w-full">
+                {ResponsiveContainer ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Bar dataKey="Hadir" fill={COLORS.hadir} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Sakit" fill={COLORS.sakit} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Izin" fill={COLORS.izin} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Alpa" fill={COLORS.alpa} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-xs text-slate-400">Loading Bar Chart...</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ClassesView = ({ classes, setClasses, students, showToast }) => {
+      const [isAddOpen, setIsAddOpen] = useState(false);
+      const [editClass, setEditClass] = useState(null);
+      const [deleteTarget, setDeleteTarget] = useState(null);
+
+      const [formData, setFormData] = useState({ name: '', level: 'VII', wali: '', room: '' });
+
+      const handleOpenAdd = () => {
+        setFormData({ name: '', level: 'VII', wali: '', room: '' });
+        setEditClass(null);
+        setIsAddOpen(true);
+      };
+
+      const handleOpenEdit = (cls) => {
+        setFormData({ name: cls.name, level: cls.level, wali: cls.wali, room: cls.room });
+        setEditClass(cls);
+        setIsAddOpen(true);
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.name.trim()) return;
+
+        if (editClass) {
+          const updated = classes.map(c => c.id === editClass.id ? { ...c, ...formData } : c);
+          setClasses(updated);
+          showToast(`Kelas ${formData.name} berhasil diperbarui!`);
+        } else {
+          const newCls = { id: genId(), ...formData };
+          setClasses([...classes, newCls]);
+          showToast(`Kelas ${formData.name} berhasil ditambahkan!`);
+        }
+        setIsAddOpen(false);
+      };
+
+      const handleDelete = () => {
+        if (!deleteTarget) return;
+        const updated = classes.filter(c => c.id !== deleteTarget.id);
+        setClasses(updated);
+        showToast(`Kelas ${deleteTarget.name} dihapus.`);
+        setDeleteTarget(null);
+      };
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-800">Manajemen Data Kelas</h3>
+              <p className="text-xs text-slate-500">Kelola daftar kelas dan wali kelas SMP Islam YTM 1 Bogor</p>
+            </div>
+            <button 
+              onClick={handleOpenAdd}
+              className="px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2"
+            >
+              <i className="fa-solid fa-plus"></i>
+              <span>Tambah Kelas Baru</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {classes.map(cls => {
+              const studentCount = students.filter(s => s.classId === cls.id).length;
+              return (
+                <div key={cls.id} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-3 py-1 bg-blue-50 text-blue-900 border border-blue-200 rounded-lg text-xs font-black">
+                        Tingkat {cls.level}
+                      </span>
+                      <span className="text-xs text-slate-500 font-semibold">
+                        <i className="fa-solid fa-door-open mr-1 text-slate-400"></i>
+                        {cls.room}
+                      </span>
+                    </div>
+                    <h4 className="text-xl font-black text-slate-800">Kelas {cls.name}</h4>
+                    <p className="text-xs text-slate-600 mt-2 flex items-center gap-2">
+                      <i className="fa-solid fa-user-tie text-amber-600"></i>
+                      <span>Wali Kelas: <strong>{cls.wali || 'Belum diatur'}</strong></span>
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">
+                      <i className="fa-solid fa-user-graduate text-slate-400 mr-1.5"></i>
+                      {studentCount} Murid
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => handleOpenEdit(cls)}
+                        className="p-2 text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg text-xs transition"
+                      >
+                        <i className="fa-solid fa-pen"></i>
+                      </button>
+                      <button 
+                        onClick={() => setDeleteTarget(cls)}
+                        className="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-xs transition"
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add / Edit Class Modal */}
+          <Modal isOpen={isAddOpen} title={editClass ? "Edit Data Kelas" : "Tambah Kelas Baru"} onClose={() => setIsAddOpen(false)}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Kelas</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Contoh: VII A, VIII B..."
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Tingkat</label>
+                <select 
+                  value={formData.level}
+                  onChange={e => setFormData({ ...formData, level: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700 bg-white"
+                >
+                  <option value="VII">Tingkat VII</option>
+                  <option value="VIII">Tingkat VIII</option>
+                  <option value="IX">Tingkat IX</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Wali Kelas</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Nama Guru Wali Kelas..."
+                  value={formData.wali}
+                  onChange={e => setFormData({ ...formData, wali: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Ruang / Gedung</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Contoh: Ruang 101, Gedung B..."
+                  value={formData.room}
+                  onChange={e => setFormData({ ...formData, room: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-100">Batal</button>
+                <button type="submit" className="px-5 py-2 text-xs font-bold text-white bg-blue-950 hover:bg-blue-900 rounded-xl shadow-md">Simpan</button>
+              </div>
+            </form>
+          </Modal>
+
+          <ConfirmModal 
+            isOpen={!!deleteTarget}
+            title="Hapus Data Kelas?"
+            message={`Apakah Anda yakin ingin menghapus kelas ${deleteTarget?.name}? Data siswa dalam kelas ini mungkin terpengaruh.`}
+            onConfirm={handleDelete}
+            onClose={() => setDeleteTarget(null)}
+          />
+        </div>
+      );
+    };
+
+    const StudentsView = ({ students, setStudents, classes, showToast, user }) => {
+      const [filterClass, setFilterClass] = useState('ALL');
+      const [searchTerm, setSearchTerm] = useState('');
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editStudent, setEditStudent] = useState(null);
+      const [deleteTarget, setDeleteTarget] = useState(null);
+
+      const [formData, setFormData] = useState({
+        nis: '', nisn: '', name: '', gender: 'L', classId: classes[0]?.id || '', parentPhone: '', address: ''
+      });
+
+      const filteredStudents = useMemo(() => {
+        return students.filter(s => {
+          const matchClass = filterClass === 'ALL' || s.classId === filterClass;
+          const matchSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.nis.includes(searchTerm);
+          return matchClass && matchSearch;
+        });
+      }, [students, filterClass, searchTerm]);
+
+      const handleOpenAdd = () => {
+        setFormData({
+          nis: `2425${1000 + students.length + 1}`,
+          nisn: `008${Math.floor(10000000 + Math.random() * 80000000)}`,
+          name: '',
+          gender: 'L',
+          classId: classes[0]?.id || '',
+          parentPhone: '0812',
+          address: 'Dramaga, Bogor'
+        });
+        setEditStudent(null);
+        setIsModalOpen(true);
+      };
+
+      const handleOpenEdit = (s) => {
+        setFormData({ ...s });
+        setEditStudent(s);
+        setIsModalOpen(true);
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.name.trim()) return;
+
+        if (editStudent) {
+          const updated = students.map(s => s.id === editStudent.id ? { ...s, ...formData } : s);
+          setStudents(updated);
+          showToast(`Data siswa ${formData.name} diperbarui!`);
+        } else {
+          const newStudent = { id: genId(), status: 'Aktif', ...formData };
+          setStudents([...students, newStudent]);
+          showToast(`Siswa ${formData.name} berhasil ditambahkan!`);
+        }
+        setIsModalOpen(false);
+      };
+
+      const handleDelete = () => {
+        if (!deleteTarget) return;
+        const updated = students.filter(s => s.id !== deleteTarget.id);
+        setStudents(updated);
+        showToast(`Siswa ${deleteTarget.name} dihapus.`);
+        setDeleteTarget(null);
+      };
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-800">Data Murid / Siswa</h3>
+              <p className="text-xs text-slate-500">Kelola direktori siswa SMP Islam YTM 1 Bogor</p>
+            </div>
+            {user.role === 'ADMIN' && (
+              <button 
+                onClick={handleOpenAdd}
+                className="px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2"
+              >
+                <i className="fa-solid fa-user-plus"></i>
+                <span>Tambah Siswa Baru</span>
+              </button>
+            )}
+          </div>
+
+          {/* Filters Bar */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="relative w-full md:w-72">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i className="fa-solid fa-magnifying-glass text-xs"></i>
+              </span>
+              <input 
+                type="text" 
+                placeholder="Cari nama atau NIS..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-200 focus:outline-none focus:border-blue-700 bg-slate-50"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <label className="text-xs font-bold text-slate-600 shrink-0">Filter Kelas:</label>
+              <select 
+                value={filterClass}
+                onChange={e => setFilterClass(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white text-slate-700 focus:outline-none focus:border-blue-700"
+              >
+                <option value="ALL">Semua Kelas ({students.length})</option>
+                {classes.map(c => (
+                  <option key={c.id} value={c.id}>Kelas {c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Students Table */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-600 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200">
+                    <th className="py-3.5 px-4">NIS / NISN</th>
+                    <th className="py-3.5 px-4">Nama Lengkap</th>
+                    <th className="py-3.5 px-4">L/P</th>
+                    <th className="py-3.5 px-4">Kelas</th>
+                    <th className="py-3.5 px-4">No. HP Orang Tua</th>
+                    <th className="py-3.5 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredStudents.length > 0 ? (
+                    filteredStudents.map(s => {
+                      const cls = classes.find(c => c.id === s.classId);
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50 transition">
+                          <td className="py-3 px-4 font-mono font-bold text-slate-700">
+                            <div>{s.nis}</div>
+                            <div className="text-[10px] text-slate-400 font-normal">{s.nisn}</div>
+                          </td>
+                          <td className="py-3 px-4 font-bold text-slate-800">
+                            {s.name}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-black ${s.gender === 'L' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'}`}>
+                              {s.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="px-2.5 py-1 bg-amber-100 text-amber-900 rounded-lg text-[11px] font-extrabold">
+                              {cls ? cls.name : '-'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
+                            {s.parentPhone || '-'}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button 
+                                onClick={() => handleOpenEdit(s)}
+                                className="p-1.5 text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition"
+                                title="Edit Siswa"
+                              >
+                                <i className="fa-solid fa-pen"></i>
+                              </button>
+                              {user.role === 'ADMIN' && (
+                                <button 
+                                  onClick={() => setDeleteTarget(s)}
+                                  className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                  title="Hapus Siswa"
+                                >
+                                  <i className="fa-solid fa-trash"></i>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="py-8 text-center text-slate-400 font-medium">
+                        Tidak ada data siswa ditemukan.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Add / Edit Student Modal */}
+          <Modal isOpen={isModalOpen} title={editStudent ? "Edit Data Siswa" : "Tambah Siswa Baru"} onClose={() => setIsModalOpen(false)}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">NIS</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={formData.nis}
+                    onChange={e => setFormData({ ...formData, nis: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">NISN</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={formData.nisn}
+                    onChange={e => setFormData({ ...formData, nisn: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap Siswa</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Masukkan nama lengkap siswa..."
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Jenis Kelamin</label>
+                  <select 
+                    value={formData.gender}
+                    onChange={e => setFormData({ ...formData, gender: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700 bg-white"
+                  >
+                    <option value="L">Laki-laki (L)</option>
+                    <option value="P">Perempuan (P)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Kelas</label>
+                  <select 
+                    value={formData.classId}
+                    onChange={e => setFormData({ ...formData, classId: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700 bg-white"
+                  >
+                    {classes.map(c => (
+                      <option key={c.id} value={c.id}>Kelas {c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">No. HP Orang Tua / Wali</label>
+                <input 
+                  type="text" 
+                  placeholder="0812xxxxxxxx"
+                  value={formData.parentPhone}
+                  onChange={e => setFormData({ ...formData, parentPhone: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Alamat Tempat Tinggal</label>
+                <textarea 
+                  rows="2"
+                  value={formData.address}
+                  onChange={e => setFormData({ ...formData, address: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700"
+                ></textarea>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-100">Batal</button>
+                <button type="submit" className="px-5 py-2 text-xs font-bold text-white bg-blue-950 hover:bg-blue-900 rounded-xl shadow-md">Simpan Data</button>
+              </div>
+            </form>
+          </Modal>
+
+          <ConfirmModal 
+            isOpen={!!deleteTarget}
+            title="Hapus Data Siswa?"
+            message={`Apakah Anda yakin ingin menghapus siswa ${deleteTarget?.name} (NIS: ${deleteTarget?.nis})?`}
+            onConfirm={handleDelete}
+            onClose={() => setDeleteTarget(null)}
+          />
+        </div>
+      );
+    };
+
+    const AttendanceInputView = ({ classes, students, attendance, setAttendance, showToast, user }) => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const [selectedDate, setSelectedDate] = useState(todayStr);
+      const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '');
+
+      const [tempStatusMap, setTempStatusMap] = useState({});
+
+      const classStudents = useMemo(() => {
+        return students.filter(s => s.classId === selectedClassId);
+      }, [students, selectedClassId]);
+
+      useEffect(() => {
+        const initialMap = {};
+        classStudents.forEach(s => {
+          const existing = attendance.find(a => a.date === selectedDate && a.studentId === s.id);
+          initialMap[s.id] = {
+            status: existing ? existing.status : 'hadir',
+            note: existing ? existing.note || '' : ''
+          };
+        });
+        setTempStatusMap(initialMap);
+      }, [selectedDate, selectedClassId, classStudents, attendance]);
+
+      const handleStatusChange = (studentId, status) => {
+        setTempStatusMap(prev => ({
+          ...prev,
+          [studentId]: { ...prev[studentId], status }
+        }));
+      };
+
+      const handleNoteChange = (studentId, note) => {
+        setTempStatusMap(prev => ({
+          ...prev,
+          [studentId]: { ...prev[studentId], note }
+        }));
+      };
+
+      const handleSetAllHadir = () => {
+        const updated = { ...tempStatusMap };
+        classStudents.forEach(s => {
+          updated[s.id] = { ...updated[s.id], status: 'hadir' };
+        });
+        setTempStatusMap(updated);
+        showToast("Seluruh murid diatur ke 'Hadir'");
+      };
+
+      const handleSaveAttendance = () => {
+        const newAttendance = [...attendance];
+
+        classStudents.forEach(s => {
+          const idx = newAttendance.findIndex(a => a.date === selectedDate && a.studentId === s.id);
+          const studentData = tempStatusMap[s.id] || { status: 'hadir', note: '' };
+
+          if (idx >= 0) {
+            newAttendance[idx] = {
+              ...newAttendance[idx],
+              status: studentData.status,
+              note: studentData.note
+            };
+          } else {
+            newAttendance.push({
+              id: genId(),
+              date: selectedDate,
+              classId: selectedClassId,
+              studentId: s.id,
+              status: studentData.status,
+              note: studentData.note
+            });
+          }
+        });
+
+        setAttendance(newAttendance);
+        showToast(`Presensi kelas untuk tanggal ${selectedDate} berhasil disimpan!`);
+      };
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-800">Input Presensi Harian</h3>
+              <p className="text-xs text-slate-500">Pilih kelas & tanggal untuk mencatat kehadiran murid</p>
+            </div>
+            <button 
+              onClick={handleSaveAttendance}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs shadow-lg shadow-emerald-600/20 transition flex items-center gap-2"
+            >
+              <i className="fa-solid fa-floppy-disk"></i>
+              <span>Simpan Presensi Kelas</span>
+            </button>
+          </div>
+
+          {/* Control Bar */}
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+            <div>
+              <label className="block text-[11px] font-black text-slate-600 uppercase mb-1">Pilih Tanggal Presensi</label>
+              <input 
+                type="date" 
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-extrabold text-slate-800 focus:outline-none focus:border-blue-700 bg-slate-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-black text-slate-600 uppercase mb-1">Pilih Kelas</label>
+              <select 
+                value={selectedClassId}
+                onChange={e => setSelectedClassId(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-extrabold text-slate-800 focus:outline-none focus:border-blue-700 bg-white"
+              >
+                {classes.map(c => (
+                  <option key={c.id} value={c.id}>Kelas {c.name} ({c.wali})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-end justify-end">
+              <button 
+                onClick={handleSetAllHadir}
+                className="w-full sm:w-auto px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 rounded-xl font-extrabold text-xs transition flex items-center justify-center gap-1.5"
+              >
+                <i className="fa-solid fa-check-double text-emerald-600"></i>
+                <span>Set Semua Hadir</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Attendance Table */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-4 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+              <span className="text-xs font-black text-slate-700 uppercase tracking-wide">
+                Daftar Murid ({classStudents.length} Siswa)
+              </span>
+              <span className="text-[11px] font-bold text-slate-500">
+                Tanggal: {selectedDate}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-600 text-[10px] font-extrabold uppercase tracking-wider border-b border-slate-200">
+                    <th className="py-3 px-4 w-12 text-center">No</th>
+                    <th className="py-3 px-4">Nama Siswa / NIS</th>
+                    <th className="py-3 px-4 text-center">Status Kehadiran</th>
+                    <th className="py-3 px-4">Catatan / Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {classStudents.length > 0 ? (
+                    classStudents.map((s, idx) => {
+                      const st = tempStatusMap[s.id] || { status: 'hadir', note: '' };
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50 transition">
+                          <td className="py-3 px-4 text-center font-bold text-slate-400">{idx + 1}</td>
+                          <td className="py-3 px-4">
+                            <p className="font-bold text-slate-800">{s.name}</p>
+                            <p className="text-[10px] font-mono text-slate-400">NIS: {s.nis}</p>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="inline-flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                              <button 
+                                type="button"
+                                onClick={() => handleStatusChange(s.id, 'hadir')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
+                                  st.status === 'hadir' 
+                                    ? 'bg-emerald-600 text-white shadow-md' 
+                                    : 'text-slate-600 hover:bg-slate-200'
+                                }`}
+                              >
+                                Hadir
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => handleStatusChange(s.id, 'sakit')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
+                                  st.status === 'sakit' 
+                                    ? 'bg-amber-500 text-white shadow-md' 
+                                    : 'text-slate-600 hover:bg-slate-200'
+                                }`}
+                              >
+                                Sakit
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => handleStatusChange(s.id, 'izin')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
+                                  st.status === 'izin' 
+                                    ? 'bg-blue-600 text-white shadow-md' 
+                                    : 'text-slate-600 hover:bg-slate-200'
+                                }`}
+                              >
+                                Izin
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => handleStatusChange(s.id, 'alpa')}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
+                                  st.status === 'alpa' 
+                                    ? 'bg-rose-600 text-white shadow-md' 
+                                    : 'text-slate-600 hover:bg-slate-200'
+                                }`}
+                              >
+                                Alpa
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <input 
+                              type="text" 
+                              placeholder="Keterangan Tambahan..."
+                              value={st.note}
+                              onChange={e => handleNoteChange(s.id, e.target.value)}
+                              className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-blue-700 bg-slate-50"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="py-8 text-center text-slate-400 font-medium">
+                        Tidak ada siswa di kelas ini.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const HistoryView = ({ classes, students, attendance }) => {
+      const [filterClass, setFilterClass] = useState('ALL');
+
+      const filteredRecords = useMemo(() => {
+        return attendance.filter(a => {
+          if (filterClass === 'ALL') return true;
+          return a.classId === filterClass;
+        });
+      }, [attendance, filterClass]);
+
+      const handlePrint = () => {
+        window.print();
+      };
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-800">Riwayat & Rekapitulasi Laporan</h3>
+              <p className="text-xs text-slate-500">Laporan histori kehadiran siswa SMP Islam YTM 1 Bogor</p>
+            </div>
+            <button 
+              onClick={handlePrint}
+              className="px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2"
+            >
+              <i className="fa-solid fa-print"></i>
+              <span>Cetak / Print Laporan</span>
+            </button>
+          </div>
+
+          {/* Filter Header for Print & Display */}
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="w-full sm:w-auto">
+              <label className="block text-xs font-bold text-slate-600 mb-1 no-print">Filter Kelas:</label>
+              <select 
+                value={filterClass}
+                onChange={e => setFilterClass(e.target.value)}
+                className="w-full sm:w-64 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white text-slate-800 focus:outline-none focus:border-blue-700"
+              >
+                <option value="ALL">Semua Kelas</option>
+                {classes.map(c => (
+                  <option key={c.id} value={c.id}>Kelas {c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="text-right">
+              <span className="text-xs font-bold text-slate-500">Total Log Terekam: </span>
+              <span className="text-base font-black text-blue-950">{filteredRecords.length} Catatan</span>
+            </div>
+          </div>
+
+          {/* Report Log Table */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200">
+                    <th className="py-3.5 px-4">Tanggal</th>
+                    <th className="py-3.5 px-4">Nama Siswa</th>
+                    <th className="py-3.5 px-4">Kelas</th>
+                    <th className="py-3.5 px-4 text-center">Status</th>
+                    <th className="py-3.5 px-4">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredRecords.length > 0 ? (
+                    filteredRecords.slice(0, 50).map(rec => {
+                      const student = students.find(s => s.id === rec.studentId);
+                      const cls = classes.find(c => c.id === rec.classId);
+
+                      const badgeBg = rec.status === 'hadir' ? 'bg-emerald-100 text-emerald-800' :
+                        rec.status === 'sakit' ? 'bg-amber-100 text-amber-800' :
+                        rec.status === 'izin' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800';
+
+                      return (
+                        <tr key={rec.id} className="hover:bg-slate-50 transition">
+                          <td className="py-3 px-4 font-mono font-bold text-slate-700">{rec.date}</td>
+                          <td className="py-3 px-4 font-bold text-slate-800">{student ? student.name : 'Siswa Dihapus'}</td>
+                          <td className="py-3 px-4 font-extrabold text-amber-900">{cls ? cls.name : '-'}</td>
+                          <td className="py-3 px-4 text-center">
+                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${badgeBg}`}>
+                              {rec.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 italic">{rec.note || '-'}</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="py-8 text-center text-slate-400 font-medium">
+                        Tidak ada riwayat presensi terpilih.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const QrView = ({ students, classes, attendance, setAttendance, showToast }) => {
+      const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
+      const [scanNisInput, setScanNisInput] = useState('');
+
+      const selectedStudent = useMemo(() => {
+        return students.find(s => s.id === selectedStudentId);
+      }, [students, selectedStudentId]);
+
+      const studentClass = useMemo(() => {
+        return classes.find(c => c.id === selectedStudent?.classId);
+      }, [classes, selectedStudent]);
+
+      const handleSimulateScan = (e) => {
+        e.preventDefault();
+        if (!scanNisInput.trim()) return;
+
+        const student = students.find(s => s.nis.trim() === scanNisInput.trim() || s.nisn.trim() === scanNisInput.trim());
+
+        if (!student) {
+          showToast(`Siswa dengan NIS "${scanNisInput}" tidak ditemukan!`, 'error');
+          return;
+        }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const existingIdx = attendance.findIndex(a => a.date === todayStr && a.studentId === student.id);
+
+        let updated = [...attendance];
+        if (existingIdx >= 0) {
+          updated[existingIdx] = { ...updated[existingIdx], status: 'hadir', note: 'Absen via QR Scan' };
+        } else {
+          updated.push({
+            id: genId(),
+            date: todayStr,
+            classId: student.classId,
+            studentId: student.id,
+            status: 'hadir',
+            note: 'Absen via QR Scan'
+          });
+        }
+
+        setAttendance(updated);
+        showToast(`BERHASIL: ${student.name} dicatat HADIR hari ini!`, 'success');
+        setScanNisInput('');
+      };
+
+      const qrUrl = selectedStudent ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${selectedStudent.nis}` : '';
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <div>
+            <h3 className="text-lg font-extrabold text-slate-800">Kartu Presensi QR & Scanner</h3>
+            <p className="text-xs text-slate-500">Cetak kartu QR digital murid atau gunakan scanner presensi cepat</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* QR Card Generator */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                <i className="fa-solid fa-address-card text-blue-800"></i>
+                <span>Cetak Kartu Siswa Digital</span>
+              </h4>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Pilih Siswa</label>
+                <select 
+                  value={selectedStudentId}
+                  onChange={e => setSelectedStudentId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:outline-none focus:border-blue-700"
+                >
+                  {students.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} (NIS: {s.nis})</option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedStudent && (
+                <div className="p-6 bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950 text-white rounded-3xl shadow-xl relative overflow-hidden border-2 border-amber-400/30">
+                  <div className="flex justify-between items-start mb-4 border-b border-white/10 pb-3">
+                    <div>
+                      <h5 className="font-extrabold text-xs tracking-wider">SMP ISLAM YTM 1 BOGOR</h5>
+                      <p className="text-[9px] text-amber-400 font-bold uppercase">KARTU PRESENSI DIGITAL</p>
+                    </div>
+                    <i className="fa-solid fa-graduation-cap text-amber-400 text-xl"></i>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="bg-white p-2 rounded-2xl shrink-0 shadow-lg">
+                      <img src={qrUrl} alt="QR Code Siswa" className="w-24 h-24 object-contain" />
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-black tracking-wide text-amber-300">{selectedStudent.name}</p>
+                      <p className="text-[11px] font-mono text-slate-200">NIS: {selectedStudent.nis}</p>
+                      <p className="text-[11px] font-bold text-slate-300">Kelas: {studentClass ? studentClass.name : '-'}</p>
+                      <p className="text-[10px] text-slate-400 pt-1">Sistem Otomasi Presensi YTM 1</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* QR Scanner Simulator */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                <i className="fa-solid fa-qrcode text-emerald-700"></i>
+                <span>Scanner Presensi Cepat</span>
+              </h4>
+
+              <div className="p-8 bg-slate-900 rounded-3xl text-center text-white space-y-4 border border-slate-800">
+                <div className="w-16 h-16 mx-auto bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl animate-pulse">
+                  <i className="fa-solid fa-camera"></i>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-200">Scan Kartu / Masukkan NIS Siswa</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Sistem akan otomatis mencatat presensi 'HADIR' hari ini</p>
+                </div>
+
+                <form onSubmit={handleSimulateScan} className="flex gap-2 max-w-xs mx-auto pt-2">
+                  <input 
+                    type="text" 
+                    placeholder="Ketik/Scan NIS..."
+                    value={scanNisInput}
+                    onChange={e => setScanNisInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-slate-900 text-xs font-mono font-bold focus:outline-none"
+                  />
+                  <button 
+                    type="submit" 
+                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-blue-950 font-black rounded-xl text-xs transition"
+                  >
+                    Scan
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const UserSettingsView = ({ users, setUsers, classes, showToast, currentUser, setCurrentUser }) => {
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editUser, setEditUser] = useState(null);
+      const [deleteTarget, setDeleteTarget] = useState(null);
+
+      const [formData, setFormData] = useState({
+        username: '', password: '', name: '', role: 'GURU', status: 'Aktif', classId: '', subject: ''
+      });
+
+      const handleOpenAdd = () => {
+        setFormData({
+          username: '', password: '', name: '', role: 'GURU', status: 'Aktif', classId: '', subject: ''
+        });
+        setEditUser(null);
+        setIsModalOpen(true);
+      };
+
+      const handleOpenEdit = (u) => {
+        setFormData({ ...u });
+        setEditUser(u);
+        setIsModalOpen(true);
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.username.trim() || !formData.password.trim()) return;
+
+        if (editUser) {
+          const updated = users.map(u => u.id === editUser.id ? { ...u, ...formData } : u);
+          setUsers(updated);
+          if (currentUser.id === editUser.id) {
+            setCurrentUser({ ...currentUser, ...formData });
+          }
+          showToast(`Akun ${formData.name} berhasil diperbarui!`);
+        } else {
+          const newUser = { id: genId(), ...formData };
+          setUsers([...users, newUser]);
+          showToast(`Akun ${formData.name} berhasil dibuat!`);
+        }
+        setIsModalOpen(false);
+      };
+
+      const handleDelete = () => {
+        if (!deleteTarget) return;
+        if (deleteTarget.id === currentUser.id) {
+          showToast("Anda tidak dapat menghapus akun Anda sendiri!", "error");
+          setDeleteTarget(null);
+          return;
+        }
+        const updated = users.filter(u => u.id !== deleteTarget.id);
+        setUsers(updated);
+        showToast(`Akun ${deleteTarget.name} dihapus.`);
+        setDeleteTarget(null);
+      };
+
+      return (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-800">Pengaturan Akun & Akses Pengguna</h3>
+              <p className="text-xs text-slate-500">Kelola kredensial Guru, Wali Kelas, dan Admin IT SMP Islam YTM 1 Bogor</p>
+            </div>
+            <button 
+              onClick={handleOpenAdd}
+              className="px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2"
+            >
+              <i className="fa-solid fa-user-plus"></i>
+              <span>Tambah Akun Pengguna</span>
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200">
+                    <th className="py-3.5 px-4">Nama Pengguna</th>
+                    <th className="py-3.5 px-4">Username</th>
+                    <th className="py-3.5 px-4">Peran / Role</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {users.map(u => (
+                    <tr key={u.id} className="hover:bg-slate-50 transition">
+                      <td className="py-3 px-4 font-bold text-slate-800">
+                        {u.name}
+                        {u.id === currentUser.id && (
+                          <span className="ml-2 text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">
+                            Anda
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 font-mono font-bold text-slate-600">{u.username}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${
+                          u.role === 'ADMIN' ? 'bg-blue-100 text-blue-900 border border-blue-200' :
+                          u.role === 'WALI' ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${u.status === 'Aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                          {u.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button 
+                            onClick={() => handleOpenEdit(u)}
+                            className="p-1.5 text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition"
+                          >
+                            <i className="fa-solid fa-pen"></i>
+                          </button>
+                          {u.id !== currentUser.id && (
+                            <button 
+                              onClick={() => setDeleteTarget(u)}
+                              className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                            >
+                              <i className="fa-solid fa-trash"></i>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Add/Edit User Modal */}
+          <Modal isOpen={isModalOpen} title={editUser ? "Edit Akun Pengguna" : "Buat Akun Pengguna Baru"} onClose={() => setIsModalOpen(false)}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Nama Lengkap</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Nama Lengkap & Gelar..."
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Username</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Username login..."
+                    value={formData.username}
+                    onChange={e => setFormData({ ...formData, username: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Kata Sandi</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Kata sandi..."
+                    value={formData.password}
+                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-700"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Peran Akses</label>
+                  <select 
+                    value={formData.role}
+                    onChange={e => setFormData({ ...formData, role: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700 bg-white"
+                  >
+                    <option value="ADMIN">ADMIN IT</option>
+                    <option value="WALI">WALI KELAS</option>
+                    <option value="GURU">GURU MAPEL</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Status Akun</label>
+                  <select 
+                    value={formData.status}
+                    onChange={e => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:border-blue-700 bg-white"
+                  >
+                    <option value="Aktif">Aktif</option>
+                    <option value="Nonaktif">Nonaktif</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-100">Batal</button>
+                <button type="submit" className="px-5 py-2 text-xs font-bold text-white bg-blue-950 hover:bg-blue-900 rounded-xl shadow-md">Simpan Akun</button>
+              </div>
+            </form>
+          </Modal>
+
+          <ConfirmModal 
+            isOpen={!!deleteTarget}
+            title="Hapus Akun Pengguna?"
+            message={`Apakah Anda yakin ingin menghapus akun ${deleteTarget?.name} (${deleteTarget?.username})?`}
+            onConfirm={handleDelete}
+            onClose={() => setDeleteTarget(null)}
+          />
+        </div>
+      );
+    };
+
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+  </script>
+</body>
+</html>
